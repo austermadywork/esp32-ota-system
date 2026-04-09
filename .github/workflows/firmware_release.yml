@@ -1,1 +1,64 @@
 
+name: Firmware Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Get version from tag
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+    
+    - name: Calculate checksum
+      id: checksum
+      run: |
+        if [ -f firmware/latest/firmware.bin ]; then
+          CHECKSUM=$(sha256sum firmware/latest/firmware.bin | awk '{print "sha256:" $1}')
+          echo "CHECKSUM=$CHECKSUM" >> $GITHUB_OUTPUT
+        else
+          echo "CHECKSUM=sha256:placeholder" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Update versions.json
+      run: |
+        python3 << 'EOF'
+        import json
+        version = "${{ steps.get_version.outputs.VERSION }}"
+        checksum = "${{ steps.checksum.outputs.CHECKSUM }}"
+        
+        with open('firmware/versions.json', 'r') as f:
+          data = json.load(f)
+        
+        data['latest_version'] = version
+        data['checksum'] = checksum
+        
+        with open('firmware/versions.json', 'w') as f:
+          json.dump(data, f, indent=2)
+        EOF
+    
+    - name: Commit and push
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+        git add firmware/versions.json
+        git commit -m "Release version ${{ steps.get_version.outputs.VERSION }}"
+        git push
+    
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.get_version.outputs.VERSION }}
+        release_name: Release ${{ steps.get_version.outputs.VERSION }}
+        body: |
+          Firmware Version: ${{ steps.get_version.outputs.VERSION }}
+          Checksum: ${{ steps.checksum.outputs.CHECKSUM }}
