@@ -1,0 +1,22 @@
+{
+  "devices": [
+    {
+      "mac_address": "AA:BB:CC:DD:EE:FF",
+      "device_name": "ESP32-Device-01",
+      "current_version": "1.2.0",
+      "device_type": "sensor",
+      "location": "living-room",
+      "enabled": true,
+      "last_checkin": "2026-04-09T10:30:00Z"
+    },
+    {
+      "mac_address": "11:22:33:44:55:66",
+      "device_name": "ESP32-Device-02",
+      "current_version": "1.1.5",
+      "device_type": "controller",
+      "location": "bedroom",
+      "enabled": true,
+      "last_checkin": "2026-04-09T09:15:00Z"
+    }
+  ]
+}
